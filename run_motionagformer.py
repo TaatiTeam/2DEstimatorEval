@@ -163,6 +163,12 @@ if __name__ == '__main__':
         p1, p2 = val(opt, actions, test_dataloader, model)
 
         if opt.train:
+            wandb.log({
+                'lr': lr,
+                'train/loss': loss,
+                'val/p1': p1,
+                'val/p2': p2,
+            }, step=epoch)
             if p1 < opt.previous_best_threshold:
                 best_chk_path = os.path.join(opt.checkpoint, 'best_epoch.bin')
                 torch.save({
