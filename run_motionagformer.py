@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     opt.out_joints = dataset.skeleton().num_joints()
 
-    model = MotionAGFormer(n_layers=16, dim_in=3, dim_feat=128, dim_rep=512, n_frames=8,
+    model = MotionAGFormer(n_layers=16, dim_in=2, dim_feat=128, dim_rep=512, n_frames=8,
                            neighbour_num=2)
 
     if torch.cuda.is_available():
