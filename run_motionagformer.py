@@ -153,6 +153,7 @@ if __name__ == '__main__':
                    name=opt.wandb_name,
                    project='2DEstimatorEvaluation',
                    settings=wandb.Settings(start_method='fork'))
+        wandb_id = wandb.run.id
         wandb.config.update(opt)
 
     for epoch in range(start_epoch, opt.nepoch):
@@ -161,13 +162,27 @@ if __name__ == '__main__':
         
         p1, p2 = val(opt, actions, test_dataloader, model)
 
-        if opt.train and p1 < opt.previous_best_threshold:
-            opt.previous_name = save_model(opt.previous_name, opt.checkpoint, epoch, p1, model, 'no_refine')
-
-            if opt.refine:
-                opt.previous_refine_name = save_model(opt.previous_refine_name, opt.checkpoint, epoch,
-                                                      p1, model['refine'], 'refine')
-            opt.previous_best_threshold = p1
+        if opt.train:
+            if p1 < opt.previous_best_threshold:
+                best_chk_path = os.path.join(opt.checkpoint, 'best_epoch.bin')
+                torch.save({
+                    'epoch': epoch + 1,
+                    'lr': lr,
+                    'optimizer': optimizer.state_dict(),
+                    'model': model.state_dict(),
+                    'previous_best_threshold': opt.previous_best_threshold,
+                    'wandb_id': wandb_id
+                }, best_chk_path)
+                opt.previous_best_threshold = p1
+            last_chk_path = os.path.join(opt.checkpoint, 'last_epoch.bin')
+            torch.save({
+                    'epoch': epoch + 1,
+                    'lr': lr,
+                    'optimizer': optimizer.state_dict(),
+                    'model': model.state_dict(),
+                    'previous_best_threshold': opt.previous_best_threshold,
+                    'wandb_id': wandb_id
+                }, last_chk_path)
 
         if not opt.train:
             print('p1: %.2f, p2: %.2f' % (p1, p2))
