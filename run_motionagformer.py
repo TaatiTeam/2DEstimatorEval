@@ -128,9 +128,7 @@ if __name__ == '__main__':
     
     all_param = []
     lr = opt.lr
-    for i_model in model:
-        all_param += list(model[i_model].parameters())
-    optimizer = optim.Adam(all_param, lr=opt.lr, amsgrad=True)
+    optimizer = optim.Adam(model.parameters(), lr=opt.lr, amsgrad=True)
 
     start_epoch = 1
     if opt.resume:
