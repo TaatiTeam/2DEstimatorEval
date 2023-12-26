@@ -37,7 +37,7 @@ def step(split, opt, actions, dataLoader, model, optimizer=None, epoch=None):
     action_error_sum = define_error_list(actions)
 
     for data in tqdm(dataLoader, 0):
-        gt_3D, input_2D, action = data
+        gt_3D, input_2D, action, subject = data
         [input_2D, gt_3D] = get_variable(split, [input_2D, gt_3D])
 
         if split =='train':
@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     opt.out_joints = dataset.skeleton().num_joints()
 
-    model = MotionAGFormer(n_layers=16, dim_in=2, dim_feat=128, dim_rep=512, n_frames=8,
+    model = MotionAGFormer(n_layers=16, dim_in=2, dim_feat=128, dim_rep=512, n_frames=243,
                            neighbour_num=2)
 
     if torch.cuda.is_available():

@@ -160,7 +160,7 @@ class Fusion(data.Dataset):
             
         input_2D_update = input_2D
 
-        return gt_3D, input_2D_update, action
+        return gt_3D, input_2D_update, action, subject
 
 
 
