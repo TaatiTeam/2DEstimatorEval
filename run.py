@@ -247,18 +247,18 @@ def main():
                         settings=wandb.Settings(start_method='fork'))
         else:
             wandb_id = wandb.util.generate_id()
-            # wandb.init(id=wandb_id,
-            #             name=args.wandb_name,
-            #             project='2DEstimatorEvaluation',
-            #             settings=wandb.Settings(start_method='fork'))
-            # wandb.config.update(args)
-            # wandb_id = wandb.run.id
+            wandb.init(id=wandb_id,
+                        name=args.wandb_name,
+                        project='2DEstimatorEvaluation',
+                        settings=wandb.Settings(start_method='fork'))
+            wandb.config.update(args)
+            wandb_id = wandb.run.id
         
         for epoch in range(start_epoch, args.epochs):
-            # train_one_epoch(model_pos, train_generator, optimizer, losses_3d_train)
+            train_one_epoch(model_pos, train_generator, optimizer, losses_3d_train)
             e1, e2, e3, ev = evaluate(model_pos, test_generator, kps_left, kps_right,
                                       receptive_field, joints_left, joints_right)
-            print(f'[{epoch + 1}] lr {lr} 3d_train {losses_3d_train[-1] * 1000} 3d_valid {losses_3d_valid[-1] * 1000}')
+            print(f'[{epoch + 1}] lr {lr} 3d_train {losses_3d_train[-1] * 1000} 3d_valid {e1}')
             wandb.log({
                 'lr': lr,
                 'train/loss': losses_3d_train[-1] * 1000,
