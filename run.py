@@ -69,7 +69,7 @@ def evaluate(model_pos, test_generator, kps_left, kps_right, receptive_field, jo
     with torch.no_grad():
         model_eval = model_pos
         N = 0
-        for _, batch, batch_2d in test_generator.next_epoch():
+        for _, batch, batch_2d in tqdm(test_generator.next_epoch()):
             inputs_2d = torch.from_numpy(batch_2d.astype('float32'))
             inputs_3d = torch.from_numpy(batch.astype('float32'))
 
@@ -77,8 +77,9 @@ def evaluate(model_pos, test_generator, kps_left, kps_right, receptive_field, jo
             inputs_2d_flip [:, :, :, 0] *= -1
             inputs_2d_flip[:, :, kps_left + kps_right,:] = inputs_2d_flip[:, :, kps_right + kps_left,:]
 
-            inputs_2d, inputs_3d = eval_data_prepare(receptive_field, inputs_2d, inputs_3d)
-            inputs_2d_flip, _ = eval_data_prepare(receptive_field, inputs_2d_flip, inputs_3d)
+            inputs_3d_p = inputs_3d
+            inputs_2d, inputs_3d = eval_data_prepare(receptive_field, inputs_2d, inputs_3d_p)
+            inputs_2d_flip, _ = eval_data_prepare(receptive_field, inputs_2d_flip, inputs_3d_p)
 
             if torch.cuda.is_available():
                 inputs_2d = inputs_2d.cuda()
@@ -246,15 +247,15 @@ def main():
                         settings=wandb.Settings(start_method='fork'))
         else:
             wandb_id = wandb.util.generate_id()
-            wandb.init(id=wandb_id,
-                        name=args.wandb_name,
-                        project='2DEstimatorEvaluation',
-                        settings=wandb.Settings(start_method='fork'))
-            wandb.config.update(args)
-            wandb_id = wandb.run.id
+            # wandb.init(id=wandb_id,
+            #             name=args.wandb_name,
+            #             project='2DEstimatorEvaluation',
+            #             settings=wandb.Settings(start_method='fork'))
+            # wandb.config.update(args)
+            # wandb_id = wandb.run.id
         
         for epoch in range(start_epoch, args.epochs):
-            train_one_epoch(model_pos, train_generator, optimizer, losses_3d_train)
+            # train_one_epoch(model_pos, train_generator, optimizer, losses_3d_train)
             e1, e2, e3, ev = evaluate(model_pos, test_generator, kps_left, kps_right,
                                       receptive_field, joints_left, joints_right)
             print(f'[{epoch + 1}] lr {lr} 3d_train {losses_3d_train[-1] * 1000} 3d_valid {losses_3d_valid[-1] * 1000}')
