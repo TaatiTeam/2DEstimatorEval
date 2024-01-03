@@ -8,7 +8,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import os
-import sys
 
 from einops import rearrange
 from copy import deepcopy
@@ -219,13 +218,12 @@ def main():
         optimizer = optim.AdamW(model_pos.parameters(), lr=lr, weight_decay=0.1)
         lr_decay = args.lr_decay
         losses_3d_train = []
-        losses_3d_valid = []
 
         start_epoch = 0
         min_loss = float('inf')
 
-        if args.resume:
-            chk_filename = os.path.join(args.checkpoint, args.resume)
+        chk_filename = os.path.join(args.checkpoint, args.resume)
+        if args.resume and os.path.exists(chk_filename):
             print(f'[INFO] Loading checkpoint from {chk_filename}')
             checkpoint = torch.load(chk_filename, map_location=lambda storage, loc: storage)
             model_pos.load_state_dict(checkpoint['model_pos'], strict=False)
