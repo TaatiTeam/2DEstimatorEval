@@ -188,7 +188,8 @@ def main():
 
     train_generator = init_train_generator(subjects_train, keypoints_2d, dataset_3d,
                                            pad, kps_left, kps_right, joints_left, joints_right,
-                                           stride=args.downsample, action_filter=action_filter)
+                                           stride=args.downsample, action_filter=action_filter,
+                                           args=args)
     test_generator = init_test_generator(subjects_test, keypoints_2d, dataset_3d, pad,
                                          kps_left, kps_right, joints_left, joints_right,
                                          stride=args.downsample, action_filter=action_filter)
@@ -237,7 +238,7 @@ def main():
 
             lr = checkpoint['lr']
             min_loss = checkpoint['min_loss']
-            wandb_id = args.wandb_id if args.wandb_id is not None else checkpoint['wandb_id']
+            wandb_id = checkpoint['wandb_id']
 
             wandb.init(id=wandb_id,
                         project='2DEstimatorEvaluation',
@@ -250,6 +251,7 @@ def main():
                         project='2DEstimatorEvaluation',
                         settings=wandb.Settings(start_method='fork'))
             wandb.config.update(args)
+            wandb_id = wandb.run.id
         
         for epoch in range(start_epoch, args.epochs):
             train_one_epoch(model_pos, train_generator, optimizer, losses_3d_train)

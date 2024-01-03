@@ -36,7 +36,7 @@ def parse_args():
 
 
     # Model arguments
-    parser.add_argument('-s', '--stride', default=1, type=int, metavar='N', help='chunk size to use during training')
+    parser.add_argument('-s', '--stride', default=243, type=int, metavar='N', help='chunk size to use during training')
     parser.add_argument('-e', '--epochs', default=120, type=int, metavar='N', help='number of training epochs')
     parser.add_argument('-b', '--batch-size', default=1024, type=int, metavar='N', help='batch size in terms of predicted frames')
     parser.add_argument('-drop', '--dropout', default=0., type=float, metavar='P', help='dropout probability')
@@ -61,7 +61,8 @@ def parse_args():
     # parser.add_argument('-ch', '--channels', default=1024, type=int, metavar='N', help='number of channels in convolution layers')
 
     # Experimental
-    parser.add_argument('-gpu', default='0', type=str, help='assign the gpu(s) to use')
+    parser.add_argument('--wandb-id', type=str)
+    parser.add_argument('--wandb-name', type=str)
     parser.add_argument('--subset', default=1, type=float, metavar='FRACTION', help='reduce dataset size by fraction')
     parser.add_argument('--downsample', default=1, type=int, metavar='FACTOR', help='downsample frame rate by factor (semi-supervised)')
     parser.add_argument('--warmup', default=1, type=int, metavar='N', help='warm-up epochs for semi-supervision')
