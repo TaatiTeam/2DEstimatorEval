@@ -1,14 +1,13 @@
-
 import numpy as np
 import copy
 from common.skeleton import Skeleton
 from common.mocap_dataset import MocapDataset
-from common.camera import normalize_screen_coordinates
+from common.camera import normalize_screen_coordinates, image_coordinates
 
-h36m_skeleton = Skeleton(parents=[-1, 0, 1, 2, 3, 4, 0, 6, 7, 8, 9, 0, 11, 12, 13, 14, 12,
-                                  16, 17, 18, 19, 20, 19, 22, 12, 24, 25, 26, 27, 28, 27, 30],
-                         joints_left=[6, 7, 8, 9, 10, 16, 17, 18, 19, 20, 21, 22, 23],
-                         joints_right=[1, 2, 3, 4, 5, 24, 25, 26, 27, 28, 29, 30, 31])
+h36m_skeleton = Skeleton(parents=[-1,  0,  1,  2,  3,  4,  0,  6,  7,  8,  9,  0, 11, 12, 13, 14, 12,
+       16, 17, 18, 19, 20, 19, 22, 12, 24, 25, 26, 27, 28, 27, 30],
+       joints_left=[6, 7, 8, 9, 10, 16, 17, 18, 19, 20, 21, 22, 23],
+       joints_right=[1, 2, 3, 4, 5, 24, 25, 26, 27, 28, 29, 30, 31])
 
 h36m_cameras_intrinsic_params = [
     {
@@ -19,7 +18,7 @@ h36m_cameras_intrinsic_params = [
         'tangential_distortion': [-0.0009756988729350269, -0.00142447161488235],
         'res_w': 1000,
         'res_h': 1002,
-        'azimuth': 70,  
+        'azimuth': 70, # Only used for visualization
     },
     {
         'id': '55011271',
@@ -29,7 +28,7 @@ h36m_cameras_intrinsic_params = [
         'tangential_distortion': [-0.0016190266469493508, -0.0027408944442868233],
         'res_w': 1000,
         'res_h': 1000,
-        'azimuth': -70, 
+        'azimuth': -70, # Only used for visualization
     },
     {
         'id': '58860488',
@@ -39,7 +38,7 @@ h36m_cameras_intrinsic_params = [
         'tangential_distortion': [0.0014843869721516967, -0.0007599993259645998],
         'res_w': 1000,
         'res_h': 1000,
-        'azimuth': 110, 
+        'azimuth': 110, # Only used for visualization
     },
     {
         'id': '60457274',
@@ -49,7 +48,7 @@ h36m_cameras_intrinsic_params = [
         'tangential_distortion': [-0.0005872055771760643, -0.0018133620033040643],
         'res_w': 1000,
         'res_h': 1002,
-        'azimuth': -110,  
+        'azimuth': -110, # Only used for visualization
     },
 ]
 
@@ -200,36 +199,33 @@ h36m_cameras_extrinsic_params = {
     ],
 }
 
-
 class Human36mDataset(MocapDataset):
-    def __init__(self, path, opt, remove_static_joints=True):
+    def __init__(self, path, remove_static_joints=True):
         super().__init__(fps=50, skeleton=h36m_skeleton)
-        self.train_list = ['S1', 'S5', 'S6', 'S7', 'S8']
-        self.test_list = ['S9', 'S11']
-
+        
         self._cameras = copy.deepcopy(h36m_cameras_extrinsic_params)
         for cameras in self._cameras.values():
             for i, cam in enumerate(cameras):
                 cam.update(h36m_cameras_intrinsic_params[i])
                 for k, v in cam.items():
                     if k not in ['id', 'res_w', 'res_h']:
-                        cam[k] = np.array(v, dtype='float32') 
-
-                if opt.crop_uv == 0:
-                    cam['center'] = normalize_screen_coordinates(cam['center'], w=cam['res_w'], h=cam['res_h']).astype(
-                        'float32')
-                    cam['focal_length'] = cam['focal_length'] / cam['res_w'] * 2
-
+                        cam[k] = np.array(v, dtype='float32')
+                
+                # Normalize camera frame
+                cam['center'] = normalize_screen_coordinates(cam['center'], w=cam['res_w'], h=cam['res_h']).astype('float32')
+                cam['focal_length'] = cam['focal_length']/cam['res_w']*2
                 if 'translation' in cam:
-                    cam['translation'] = cam['translation'] / 1000 
-
+                    cam['translation'] = cam['translation']/1000 # mm to meters
+                
+                # Add intrinsic parameters vector
                 cam['intrinsic'] = np.concatenate((cam['focal_length'],
                                                    cam['center'],
                                                    cam['radial_distortion'],
                                                    cam['tangential_distortion']))
-
-        data = np.load(path,allow_pickle=True)['positions_3d'].item()
-
+        
+        # Load serialized dataset
+        data = np.load(path, allow_pickle=True)['positions_3d'].item()
+        
         self._data = {}
         for subject, actions in data.items():
             self._data[subject] = {}
@@ -238,15 +234,13 @@ class Human36mDataset(MocapDataset):
                     'positions': positions,
                     'cameras': self._cameras[subject],
                 }
-
+                
         if remove_static_joints:
             self.remove_joints([4, 5, 9, 10, 11, 16, 20, 21, 22, 23, 24, 28, 29, 30, 31])
 
             self._skeleton._parents[11] = 8
             self._skeleton._parents[14] = 8
-
+            
     def supports_semi_supervised(self):
         return True
-
-
-
+   
