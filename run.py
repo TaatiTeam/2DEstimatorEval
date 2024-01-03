@@ -256,7 +256,7 @@ def main():
         for epoch in range(start_epoch, args.epochs):
             train_one_epoch(model_pos, train_generator, optimizer, losses_3d_train)
             e1, e2, e3, ev = evaluate(model_pos, test_generator, kps_left, kps_right,
-                                      receptive_field, joints_left, joints_right, losses_3d_valid)
+                                      receptive_field, joints_left, joints_right)
             print(f'[{epoch + 1}] lr {lr} 3d_train {losses_3d_train[-1] * 1000} 3d_valid {losses_3d_valid[-1] * 1000}')
             wandb.log({
                 'lr': lr,
