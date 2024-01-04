@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import copy
 from common.camera import world_to_camera, normalize_screen_coordinates
 from common.generators import ChunkedGenerator_Seq, UnchunkedGenerator_Seq
 from common.utils import deterministic_random
@@ -90,7 +91,7 @@ def preprocess_3d_data(dataset):
                 positions_3d = []
                 for cam in anim['cameras']:
                     pos_3d = world_to_camera(anim['positions'], R=cam['orientation'], t=cam['translation'])
-                    pos_3d[:, 1:] -= pos_3d[:, :1] # Remove global offset, but keep trajectory in first position
+                    pos_3d -= pos_3d[:, :1] # Remove global offset
                     positions_3d.append(pos_3d)
                 anim['positions_3d'] = positions_3d
 
@@ -215,3 +216,13 @@ def init_test_generator(subjects_test, keypoints_2d, dataset_3d, pad, kps_left,
                                     pad=pad, causal_shift=0, augment=False,
                                     kps_left=kps_left, kps_right=kps_right, joints_left=joints_left, joints_right=joints_right)
     return test_generator
+
+
+def flip_data(data, left_joints=[1, 2, 3, 14, 15, 16], right_joints=[4, 5, 6, 11, 12, 13]):
+    """
+    data: [N, F, 17, D] or [F, 17, D]
+    """
+    flipped_data = copy.deepcopy(data)
+    flipped_data[..., 0] *= -1  # flip x of all joints
+    flipped_data[..., left_joints + right_joints, :] = flipped_data[..., right_joints + left_joints, :]  # Change orders
+    return flipped_data

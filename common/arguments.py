@@ -38,9 +38,9 @@ def parse_args():
     # Model arguments
     parser.add_argument('-s', '--stride', default=243, type=int, metavar='N', help='chunk size to use during training')
     parser.add_argument('-e', '--epochs', default=120, type=int, metavar='N', help='number of training epochs')
-    parser.add_argument('-b', '--batch-size', default=1024, type=int, metavar='N', help='batch size in terms of predicted frames')
+    parser.add_argument('-b', '--batch-size', default=16, type=int, metavar='N', help='batch size in terms of predicted frames')
     parser.add_argument('-drop', '--dropout', default=0., type=float, metavar='P', help='dropout probability')
-    parser.add_argument('-lr', '--learning-rate', default=0.00004, type=float, metavar='LR', help='initial learning rate')
+    parser.add_argument('-lr', '--learning-rate', default=0.0005, type=float, metavar='LR', help='initial learning rate')
     parser.add_argument('-lrd', '--lr-decay', default=0.99, type=float, metavar='LR', help='learning rate decay per epoch')
     parser.add_argument('--coverlr', action='store_true', help='cover learning rate with assigned during resuming previous model')
     parser.add_argument('-mloss', '--min_loss', default=100000, type=float, help='assign min loss(best loss) during resuming previous model')
@@ -60,6 +60,11 @@ def parse_args():
     # parser.add_argument('--causal', action='store_true', help='use causal convolutions for real-time processing')
     # parser.add_argument('-ch', '--channels', default=1024, type=int, metavar='N', help='number of channels in convolution layers')
 
+
+    # Loss
+    parser.add_argument('--lambda-scale', default=0.5, type=float)
+    parser.add_argument('--lambda-velocity', default=20.0, type=float)
+    
     # Experimental
     parser.add_argument('--wandb-id', type=str)
     parser.add_argument('--wandb-name', type=str)

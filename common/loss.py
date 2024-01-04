@@ -7,7 +7,7 @@ def mpjpe(predicted, target, return_joints_err=False):
     Mean per-joint position error (i.e. mean Euclidean distance),
     often referred to as "Protocol #1" in many papers.
     """
-    assert predicted.shape == target.shape
+    assert predicted.shape == target.shape, f"predicted shape {predicted.shape} while target shape {target.shape}"
     if not return_joints_err:
         return torch.mean(torch.norm(predicted - target, dim=len(target.shape)-1))
     else:
@@ -18,6 +18,31 @@ def mpjpe(predicted, target, return_joints_err=False):
         errors = torch.mean(errors, dim=-1).cpu().numpy().reshape(-1) * 1000
         return torch.mean(torch.norm(predicted - target, dim=len(target.shape)-1)), errors
     
+
+def n_mpjpe(predicted, target):
+    """
+    Normalized MPJPE (scale only), adapted from:
+    https://github.com/hrhodin/UnsupervisedGeometryAwareRepresentationLearning/blob/master/losses/poses.py
+    """
+    assert predicted.shape == target.shape
+    norm_predicted = torch.mean(torch.sum(predicted ** 2, dim=3, keepdim=True), dim=2, keepdim=True)
+    norm_target = torch.mean(torch.sum(target * predicted, dim=3, keepdim=True), dim=2, keepdim=True)
+    scale = norm_target / norm_predicted
+    return mpjpe(scale * predicted, target)
+
+    
+def loss_velocity(predicted, target):
+    """
+    Mean per-joint velocity error (i.e. mean Euclidean distance of the 1st derivative)
+    """
+    assert predicted.shape == target.shape
+    if predicted.shape[1] <= 1:
+        return torch.FloatTensor(1).fill_(0.)[0].to(predicted.device)
+    velocity_predicted = predicted[:, 1:] - predicted[:, :-1]
+    velocity_target = target[:, 1:] - target[:, :-1]
+    return torch.mean(torch.norm(velocity_predicted - velocity_target, dim=-1))
+
+
 def weighted_mpjpe(predicted, target, w):
     """
     Weighted mean per-joint position error (i.e. mean Euclidean distance)
