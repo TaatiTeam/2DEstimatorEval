@@ -36,6 +36,7 @@ def parse_args():
 
 
     # Model arguments
+    parser.add_argument('--adaptive_merging', action='store_true', help='Uses adaptive merging in moddel')
     parser.add_argument('-s', '--stride', default=243, type=int, metavar='N', help='chunk size to use during training')
     parser.add_argument('-e', '--epochs', default=120, type=int, metavar='N', help='number of training epochs')
     parser.add_argument('-b', '--batch-size', default=16, type=int, metavar='N', help='batch size in terms of predicted frames')

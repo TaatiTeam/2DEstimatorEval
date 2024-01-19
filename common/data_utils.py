@@ -96,6 +96,23 @@ def preprocess_3d_data(dataset):
                 anim['positions_3d'] = positions_3d
 
 
+def concatenate_2d_data(keypoints_2d, keypoints_2d_new):
+    """
+    Concatenates the new keypoints 2d to the keypoints_2d dictionarry.
+    
+    Args:
+        keypoints_2d (dict): A dictionary containing the 2D keypoints for each action of different subjects in different viewpoints.
+        keypoints_2d_new (dict): A new dictionary to be concatenated (on the numpy tensors)
+    """
+    for subject in keypoints_2d:
+        for action in keypoints_2d[subject]:
+            sequence_list = keypoints_2d[subject][action]
+            sequence_list_new = keypoints_2d_new[subject][action]
+            for i in range(len(sequence_list)):
+                sequence, new_sequence = sequence_list[i], sequence_list_new[i]
+                concatenated_sequence = np.concatenate((sequence, new_sequence), axis=-1)
+                sequence_list[i] = concatenated_sequence
+
 def load_2d_data(path):
     """
     Loads the data containing 2D sequences.

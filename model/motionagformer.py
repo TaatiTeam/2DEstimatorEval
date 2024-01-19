@@ -202,7 +202,7 @@ class MotionAGFormer(nn.Module):
                  drop=0., drop_path=0., use_layer_scale=True, layer_scale_init_value=1e-5, use_adaptive_fusion=True,
                  num_heads=4, qkv_bias=False, qkv_scale=None, hierarchical=False, num_joints=17,
                  use_temporal_similarity=True, temporal_connection_len=1, use_tcn=False, graph_only=False,
-                 neighbour_num=4, n_frames=243):
+                 neighbour_num=4, n_frames=243, use_adaptive_merging=False):
         """
         :param n_layers: Number of layers.
         :param dim_in: Input dimension.
@@ -231,7 +231,7 @@ class MotionAGFormer(nn.Module):
         """
         super().__init__()
 
-        self.joints_embed = nn.Linear(dim_in, dim_feat)
+        self.joints_embed = nn.Linear(2 if use_adaptive_merging else dim_in, dim_feat)
         self.pos_embed = nn.Parameter(torch.zeros(1, num_joints, dim_feat))
         self.norm = nn.LayerNorm(dim_feat)
 
@@ -263,11 +263,21 @@ class MotionAGFormer(nn.Module):
 
         self.head = nn.Linear(dim_rep, dim_out)
 
+        self.use_adaptive_merging = use_adaptive_merging
+        if self.use_adaptive_merging:
+            self.adamerge = nn.Linear(in_features=num_joints * dim_in, out_features=num_joints* dim_in // 2)
+
     def forward(self, x, return_rep=False):
         """
         :param x: tensor with shape [B, T, J, C] (T=243, J=17, C=3)
         :param return_rep: Returns motion representation feature volume (In case of using this as backbone)
         """
+        if self.use_adaptive_merging:
+            B, T, J, C = x.shape
+            w = self.adamerge(x.reshape(B, T, J * C)).reshape(B, T, J, 1, -1)
+            x = x.reshape(B, T,  J, -1, 2)
+            x = (w @ x).squeeze(dim=3)
+
         x = self.joints_embed(x)
         x = x + self.pos_embed
 

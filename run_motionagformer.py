@@ -118,11 +118,17 @@ def main():
     joints_left, joints_right = list(dataset_3d.skeleton().joints_left()), list(dataset_3d.skeleton().joints_right())
 
     # Data 2D
-    data_2d_path = f'data/data_2d_{args.dataset}_{args.keypoints}.npz'
-    keypoints_2d, _, _, _ = load_2d_data(data_2d_path)
-
-    verify_2d_3d_matching(keypoints_2d, dataset_3d)
-    normalize_2d_data(keypoints_2d, dataset_3d)
+    keypoint_names = [args.keypoints] if args.keypoints != 'adaptive_merge' else ['vitpose', 'pct', 'moganet']
+    keypoints_2d = None
+    for keypoint_name in keypoint_names:
+        data_2d_path = f'data/data_2d_{args.dataset}_{keypoint_name}.npz'
+        keypoints_2d_new, _, _, _ = load_2d_data(data_2d_path)
+        verify_2d_3d_matching(keypoints_2d_new, dataset_3d)
+        normalize_2d_data(keypoints_2d_new, dataset_3d)
+        if keypoints_2d is None:
+            keypoints_2d = keypoints_2d_new
+        else:
+            concatenate_2d_data(keypoints_2d, keypoints_2d_new)
 
     receptive_field = args.number_of_frames
     print(f'[INFO] Receptive field: {receptive_field} frames')
@@ -142,8 +148,9 @@ def main():
     train_loader = DataLoader(train_dataset, shuffle=True, **common_loader_params)
     test_loader = DataLoader(test_dataset, shuffle=False, **common_loader_params)
 
-    model_pos = MotionAGFormer(n_layers=16, dim_in=2, dim_feat=128, dim_rep=512, n_frames=receptive_field,
-                           neighbour_num=2)
+    model_pos = MotionAGFormer(n_layers=16, dim_in=len(keypoint_names) * 2,
+                              dim_feat=128, dim_rep=512, n_frames=receptive_field, neighbour_num=2,
+                              use_adaptive_merging=args.adaptive_merging)
     model_params = count_number_of_parameters(model_pos)
     print('[INFO] Trainable parameter count:', model_params/1000000, 'Million')
 
