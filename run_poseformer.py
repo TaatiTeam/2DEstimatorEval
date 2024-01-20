@@ -134,7 +134,7 @@ def main():
     joints_left, joints_right = list(dataset_3d.skeleton().joints_left()), list(dataset_3d.skeleton().joints_right())
 
     # Data 2D
-    keypoint_names = [args.keypoints] if args.keypoints != 'adaptive_merge' else ['vitpose', 'pct', 'moganet']
+    keypoint_names = [args.keypoints] if args.keypoints != 'concatenate' else ['vitpose', 'pct', 'moganet']
     keypoints_2d = None
     for keypoint_name in keypoint_names:
         data_2d_path = f'data/data_2d_{args.dataset}_{keypoint_name}.npz'
