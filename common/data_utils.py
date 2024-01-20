@@ -2,63 +2,44 @@ import numpy as np
 import os
 import copy
 from common.camera import world_to_camera, normalize_screen_coordinates
-from common.generators import ChunkedGenerator_Seq, UnchunkedGenerator_Seq
-from common.utils import deterministic_random
+from common.generators import ChunkedGenerator, UnchunkedGenerator
 
 
-def fetch(subjects, stride, keypoints, dataset, action_filter=None, subset=1, parse_3d_poses=True):
+def fetch(subjects, keypoints_2d, dataset_3d):
+    """
+    Fetches the data and returns list of sequences
+    Args:
+        subjects (list): List of subjects to fetch (training and test are having different subjects)
+        keypoints_2d (dict): Dictionary containing 2D data.
+        dataset_3d (Human36mDataset): dataset containing the 3D sequences.
+
+    returns:
+        out_poses_3d (list): List containing 3D pose sequence
+        out_poses_2d (list): List containing 2D pose sequence
+    """
     out_poses_3d = []
     out_poses_2d = []
-    out_camera_params = []
     for subject in subjects:
-        for action in keypoints[subject].keys():
-            if action_filter is not None:
-                found = False
-                for a in action_filter:
-                    if action.startswith(a):
-                        found = True
-                        break
-                if not found:
-                    continue
-
-            poses_2d = keypoints[subject][action]
+        for action in keypoints_2d[subject].keys():
+            poses_2d = keypoints_2d[subject][action]
+            
             for i in range(len(poses_2d)): # Iterate across cameras
                 out_poses_2d.append(poses_2d[i])
 
-            if subject in dataset.cameras():
-                cams = dataset.cameras()[subject]
+            if subject in dataset_3d.cameras():
+                cams = dataset_3d.cameras()[subject]
                 assert len(cams) == len(poses_2d), 'Camera count mismatch'
-                for cam in cams:
-                    if 'intrinsic' in cam:
-                        out_camera_params.append(cam['intrinsic'])
 
-            if parse_3d_poses and 'positions_3d' in dataset[subject][action]:
-                poses_3d = dataset[subject][action]['positions_3d']
+            if 'positions_3d' in dataset_3d[subject][action]:
+                poses_3d = dataset_3d[subject][action]['positions_3d']
                 assert len(poses_3d) == len(poses_2d), 'Camera count mismatch'
                 for i in range(len(poses_3d)): # Iterate across cameras
                     out_poses_3d.append(poses_3d[i])
 
-    if len(out_camera_params) == 0:
-        out_camera_params = None
     if len(out_poses_3d) == 0:
         out_poses_3d = None
 
-    if subset < 1:
-        for i in range(len(out_poses_2d)):
-            n_frames = int(round(len(out_poses_2d[i])//stride * subset)*stride)
-            start = deterministic_random(0, len(out_poses_2d[i]) - n_frames + 1, str(len(out_poses_2d[i])))
-            out_poses_2d[i] = out_poses_2d[i][start:start+n_frames:stride]
-            if out_poses_3d is not None:
-                out_poses_3d[i] = out_poses_3d[i][start:start+n_frames:stride]
-    elif stride > 1:
-        # Downsample as requested
-        for i in range(len(out_poses_2d)):
-            out_poses_2d[i] = out_poses_2d[i][::stride]
-            if out_poses_3d is not None:
-                out_poses_3d[i] = out_poses_3d[i][::stride]
-
-
-    return out_camera_params, out_poses_3d, out_poses_2d
+    return out_poses_3d, out_poses_2d
 
 
 def create_checkpoint_dir_if_not_exists(checkpoint_dir):
@@ -183,7 +164,7 @@ def normalize_2d_data(keypoints_2d, dataset_3d):
 
 
 def init_train_generator(subjects_train, keypoints_2d, dataset_3d, pad, kps_left, kps_right,
-                         joints_left, joints_right, stride, action_filter, args):
+                         joints_left, joints_right, args):
     """
     Initializes train generator.
 
@@ -196,21 +177,20 @@ def init_train_generator(subjects_train, keypoints_2d, dataset_3d, pad, kps_left
         kps_right (list): List of indices corresponding to right joints of body (2D sequence)
         joints_left (list): List of indices corresponding to left joints of body (3D sequence)
         joints_right (list): List of indices corresponding to right joints of body (3D sequence)
-        stride (int): if > 1, it downsamples the sequences
-        action_filter (list): List of action to filter out. None if empty
         args (object): Command-line arguments.
     """
-    cameras_train, poses_train, poses_train_2d = fetch(subjects_train, stride,
-                                                       keypoints_2d, dataset_3d,
-                                                       action_filter, subset=args.subset)
-    train_generator = ChunkedGenerator_Seq(args.batch_size//args.stride, cameras_train, poses_train, poses_train_2d, args.number_of_frames,
-                                       pad=pad, causal_shift=0, shuffle=True, augment=args.data_augmentation,
-                                       kps_left=kps_left, kps_right=kps_right, joints_left=joints_left, joints_right=joints_right)
+    poses_3d_train, poses_2d_train = fetch(subjects_train, keypoints_2d, dataset_3d)
+    train_generator = ChunkedGenerator(args.batch_size // args.stride, None, poses_3d_train,
+                                       poses_2d_train, args.stride,
+                                       pad=pad, causal_shift=0, shuffle=True, 
+                                       augment=args.data_augmentation,
+                                       kps_left=kps_left, kps_right=kps_right, 
+                                       joints_left=joints_left, joints_right=joints_right)
     return train_generator
 
 
 def init_test_generator(subjects_test, keypoints_2d, dataset_3d, pad, kps_left,
-                        kps_right, joints_left, joints_right, stride, action_filter):
+                        kps_right, joints_left, joints_right):
     """
     Initializes test generator.
 
@@ -223,13 +203,9 @@ def init_test_generator(subjects_test, keypoints_2d, dataset_3d, pad, kps_left,
         kps_right (list): List of indices corresponding to right joints of body (2D sequence)
         joints_left (list): List of indices corresponding to left joints of body (3D sequence)
         joints_right (list): List of indices corresponding to right joints of body (3D sequence)
-        stride (int): if > 1, it downsamples the sequences
-        action_filter (list): List of action to filter out. None if empty
     """
-    cameras_valid, poses_valid, poses_valid_2d = fetch(subjects_test, stride,
-                                                       keypoints_2d, dataset_3d,
-                                                       action_filter)
-    test_generator = UnchunkedGenerator_Seq(cameras_valid, poses_valid, poses_valid_2d,
+    poses_3d_validation, poses_2d_validation = fetch(subjects_test, keypoints_2d, dataset_3d)
+    test_generator = UnchunkedGenerator(None, poses_3d_validation, poses_2d_validation,
                                     pad=pad, causal_shift=0, augment=False,
                                     kps_left=kps_left, kps_right=kps_right, joints_left=joints_left, joints_right=joints_right)
     return test_generator

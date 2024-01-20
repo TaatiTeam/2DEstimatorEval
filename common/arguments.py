@@ -36,8 +36,9 @@ def parse_args():
 
 
     # Model arguments
+    parser.add_argument('--embed-dim-ratio', default=32, type=int, metavar='N', help='dimension of embedding ratio') 
     parser.add_argument('--adaptive_merging', action='store_true', help='Uses adaptive merging in moddel')
-    parser.add_argument('-s', '--stride', default=243, type=int, metavar='N', help='chunk size to use during training')
+    parser.add_argument('-s', '--stride', default=1, type=int, metavar='N', help='chunk size to use during training')
     parser.add_argument('-e', '--epochs', default=120, type=int, metavar='N', help='number of training epochs')
     parser.add_argument('-b', '--batch-size', default=16, type=int, metavar='N', help='batch size in terms of predicted frames')
     parser.add_argument('-drop', '--dropout', default=0., type=float, metavar='P', help='dropout probability')
@@ -47,20 +48,12 @@ def parse_args():
     parser.add_argument('-mloss', '--min_loss', default=100000, type=float, help='assign min loss(best loss) during resuming previous model')
     parser.add_argument('-no-da', '--no-data-augmentation', dest='data_augmentation', action='store_false',
                         help='disable train-time flipping')
-    parser.add_argument('-cs', default=512, type=int, help='channel size of model, only for trasformer') 
-    parser.add_argument('-dep', default=8, type=int, help='depth of model')    
-    parser.add_argument('-alpha', default=0.01, type=float, help='used for wf_mpjpe')
-    parser.add_argument('-beta', default=2, type=float, help='used for wf_mpjpe')
-    parser.add_argument('--postrf', action='store_true', help='use the post refine module')
-    parser.add_argument('--ftpostrf', action='store_true', help='For fintune to post refine module')
-    # parser.add_argument('-no-tta', '--no-test-time-augmentation', dest='test_time_augmentation', action='store_false',
-    #                     help='disable test-time flipping')
-    # parser.add_argument('-arc', '--architecture', default='3,3,3', type=str, metavar='LAYERS', help='filter widths separated by comma')
-    parser.add_argument('-f', '--number-of-frames', default='243', type=int, metavar='N',
+    parser.add_argument('-frame', '--number-of-frames', default=27, type=int, metavar='N',
                         help='how many frames used as input')
-    # parser.add_argument('--causal', action='store_true', help='use causal convolutions for real-time processing')
-    # parser.add_argument('-ch', '--channels', default=1024, type=int, metavar='N', help='number of channels in convolution layers')
-
+    parser.add_argument('-frame-kept', '--number-of-kept-frames', default='3', type=int, metavar='N',
+                        help='how many frames are kept')
+    parser.add_argument('-coeff-kept', '--number-of-kept-coeffs', type=int, metavar='N', help='how many coefficients are kept')
+    parser.add_argument('--depth', default=4, type=int, metavar='N', help='number of transformer blocks')  
 
     # Loss
     parser.add_argument('--lambda-scale', default=0.5, type=float)
