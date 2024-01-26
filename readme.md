@@ -184,4 +184,5 @@ python run_motionagformer.py --epochs 60 --keypoints vitpose
 ## Acknowledgement
 Our code refers to the following repositories:
 - [PoseformerV2](https://github.com/QitaoZhao/PoseFormerV2)
+- [MotionAGFormer](https://github.com/TaatiTeam/MotionAGFormer)
 - [VideoPose3D](https://github.com/facebookresearch/VideoPose3D/)
