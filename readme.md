@@ -1,4 +1,7 @@
-# Dataset
+# Evaluating Recent 2D Human Pose Estimators for 2D-3D Pose Lifting
+This is the official PyTorch implementation of the paper "Evaluating Recent 2D Human Pose Estimators for 2D-3D Pose Lifting" (FG 2024).
+
+## Dataset
 We have used Human3.6M dataset for this project. For downloading it, please send a request to the [official website](http://vision.imar.ro/human3.6m/description.php) or download the preprocessed versions from [our google drive](https://drive.google.com/drive/folders/1K8LxjHjxyztfnbF5rckw_3gHce0eLlC8?usp=sharing). Short description of each files:
 - `data_2d_h36m_gt.npz`: 2D groundtruth data
 - `data_2d_h36m_vitpose.npz`: 2D data estimated by ViTPose-H
@@ -15,9 +18,9 @@ We have used Human3.6M dataset for this project. For downloading it, please send
 
 After downloading them, place them in `data` directory. Note that for concatenate merging we don't provide a separe npz file and we build it into the code by merging ViTPose, PCT, and MogaNet.
  
-## Preprocessing
+### Preprocessing
 This is needed only in case you're using the official website CDF files provided by Human3.6M. In case of using our preprocessed data, you can ignore these steps.
-### Setup from original source (CDF files)
+#### Setup from original source (CDF files)
 Among the given files from official webiste of Human3.6M, download `Poses_D3_Positions_<SUBJECT>.tgz` files where `<SUBJECT>` is S1, S5, S6, S7, S8, S9, S11. Then extract them all and put them in a folder with an arbitrary name (let's call `cdf_files` here). Next, put the folder into this project under `data/preprocess` directory. It's expected to have following structure of files:
 ```
 data/preprocess/cdf_files/S1/MyPoseFeatures/D3_Positions/Directions 1.cdf
@@ -66,7 +69,7 @@ throughout the training. So later in run_poseformer.py the main 17 keypoints wil
 """
 ```
 
-### Preparing the output of 2D pose estimations.
+#### Preparing the output of 2D pose estimations.
 It's expected that outputs of 2D estimator to be located in a directory with the following structure:
 ```
 .
@@ -106,7 +109,7 @@ Structure of data_2d:
 """
 ```
 
-### Preparing merged dataset
+#### Preparing merged dataset
 **Note:** The merged estimations are also located in [our google drive](https://drive.google.com/drive/u/2/folders/1K8LxjHjxyztfnbF5rckw_3gHce0eLlC8). Instructions below is just for the case of reproducing the results.
 
 We have proposed 3 different merging strategies. The code to create the merged dataset can be executed as follows:
@@ -123,7 +126,7 @@ Where `<MERGING-STRATEGY>` is one of these options:
 
 **Note**: For the weighted_average option, the keypoints should have confidence scores. So for generating keypoints using `prepare_2d_estimation.py`, you should also pass `--keep-conf` as argument (the output npz will have `_w_conf` at the end).
 
-## Visualization
+### Visualization
 For dataset visualization, you need to have the following npz files in data directory:
 - **data_3d_h36m.npz**
 - **data_2d_h36m_gt.npz**
@@ -154,8 +157,8 @@ Where:
  <p><img src="figs/sample_data.gif" alt="" /></p>
  In the visualization above, 2D estimation belongs to ViTPose.
 
-# Training and evaluation
-## Training PoseFormerV2
+## Training and evaluation
+### Training PoseFormerV2
 You can train the model by running the `run_poseformer.py`. Sample for ViTPose is as follows:
 ```
 python run_poseformer.py --keypoints vitpose \
@@ -184,7 +187,7 @@ python run_poseformer.py --keypoints vitpose \
 ```
 Where you have to find the `wandb-id` from the wandb run id. After the end of training, the script above uplodas the model weights into wandb server for future usage.
 
-## Training MotionAGFormer
+### Training MotionAGFormer
 You can train as follows:
 ```
 python run_motionagformer.py --wandb-name MotionAGFormer-vitpose \
@@ -194,7 +197,7 @@ python run_motionagformer.py --wandb-name MotionAGFormer-vitpose \
                               --keypoints vitpose
 ```
 
-## Pretrained weights
+### Pretrained weights
 - [PoseFormerV2 weights](https://drive.google.com/drive/u/2/folders/1ET2y9MpanDvsrOceuox2toWwIZNTdlKw)
 - [MotionAGFormer weights](https://drive.google.com/drive/folders/19eDxxTMbsJKTTVJW6K_icyknHKSegMSF?usp=drive_link)
 
