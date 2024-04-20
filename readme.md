@@ -3,7 +3,7 @@ We have used Human3.6M dataset for this project. For downloading it, please send
 - `data_2d_h36m_gt.npz`: 2D groundtruth data
 - `data_2d_h36m_vitpose.npz`: 2D data estimated by ViTPose-H
 - `data_2d_h36m_cpn_ft_h36m_dbb.npz`: 2D data estimated by CPN (finetuned on Human3.6M Dataset)
-- `data_2d_h36m_cpnnpz`: 2D data estimated by CPN without finetuning
+- `data_2d_h36m_cpn.npz`: 2D data estimated by CPN without finetuning
 - `data_2d_h36m_detectron_ft_h36m.npz`: 2D data estimated by Detectron (finetuned on Human3.6M Dataset)
 - `data_2d_h36m_moganet.npz`: 2D data estimated by MogaNet
 - `data_2d_h36m_pct.npz`: 2D data estimated by PCT
