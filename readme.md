@@ -3,6 +3,7 @@ We have used Human3.6M dataset for this project. For downloading it, please send
 - `data_2d_h36m_gt.npz`: 2D groundtruth data
 - `data_2d_h36m_vitpose.npz`: 2D data estimated by ViTPose-H
 - `data_2d_h36m_cpn_ft_h36m_dbb.npz`: 2D data estimated by CPN (finetuned on Human3.6M Dataset)
+- `data_2d_h36m_cpnnpz`: 2D data estimated by CPN without finetuning
 - `data_2d_h36m_detectron_ft_h36m.npz`: 2D data estimated by Detectron (finetuned on Human3.6M Dataset)
 - `data_2d_h36m_moganet.npz`: 2D data estimated by MogaNet
 - `data_2d_h36m_pct.npz`: 2D data estimated by PCT
@@ -157,23 +158,40 @@ Where:
 ## Training PoseFormerV2
 You can train the model by running the `run_poseformer.py`. Sample for ViTPose is as follows:
 ```
-python run_poseformer.py -g 0 -frame 27 -frame-kept 3 -coeff-kept 3 -c checkpoint/vitpose \
-                         --wandb-name poseformerv2-vitpose --epochs 200 --keypoints vitpose
+python run_poseformer.py --keypoints vitpose \
+                         --batch-size 1024 \
+                         -frame 27 \
+                         -frame-kept 3 \
+                         -coeff-kept 3  \
+                         --checkpoint checkpoint/vitpose \
+                         --epochs 200 \
+                         --wandb-name poseformerv2-vitpose
 ```
 The script above stores the checkpoints in `checkpoint/vitpose` directory. It trains for 200 epochs and because of `--keypoints vitpose`, it reads the npz file that belongs to vitpose (basically in `data_2d_h36m_vitpose.npz` file name it cares about whatever comes after last underscore).
 
 Also in case that you want to resume training if it stops during training for some reason, you can do the following:
 ```
-python run_poseformer.py -g 0 -frame 27 -frame-kept 3 -coeff-kept 3 -c checkpoint/vitpose \
-                         --wandb-name poseformerv2-vitpose --epochs 200 --keypoints vitpose --resume last_epoch.bin \
-                         --wandb-id 6mr5twid
+python run_poseformer.py --keypoints vitpose \
+                         --batch-size 1024 \
+                         -frame 27 \
+                         -frame-kept 3 \
+                         -coeff-kept 3  \
+                         --checkpoint checkpoint/vitpose \
+                         --epochs 200 \
+                         --wandb-name poseformerv2-vitpose \
+                         --resume last_epoch.bin \
+                         --wandb-id fnwki6ko 
 ```
 Where you have to find the `wandb-id` from the wandb run id. After the end of training, the script above uplodas the model weights into wandb server for future usage.
 
 ## Training MotionAGFormer
 You can train as follows:
 ```
-python run_motionagformer.py --epochs 60 --keypoints vitpose
+python run_motionagformer.py --wandb-name MotionAGFormer-vitpose \
+                              --checkpoint checkpoint/vitpose \
+                              --number-of-frames 243 \
+                              --epochs 60 \
+                              --keypoints vitpose
 ```
 
 ## Pretrained weights
